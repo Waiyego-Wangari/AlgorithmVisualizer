@@ -1,14 +1,23 @@
-myCanvas.width = 800; //500
-myCanvas.height = 500; //300
+// import { bubbleSort } from "./bubbleSort.js";
+// import { quickSort } from "./quickSort.js";
+// import { insertionSort } from "./insertionSort.js";
+// import { animate } from "./visualization.js";
+const bubbleSortCanvas = document.getElementById("bubbleSortCanvas");
+const quickSortCanvas = document.getElementById("quickSortCanvas");
+bubbleSortCanvas.width = 800; //500
+bubbleSortCanvas.height = 500; //300
+quickSortCanvas.width = 800;
+quickSortCanvas.height = 500;
+const quickSortCtx = quickSortCanvas.getContext("2d");
 
 const n = 18; //18
 const array = [];
 
-const stringHeight = myCanvas.height * 0.4;
+const stringHeight = bubbleSortCanvas.height * 0.4;
 
 const socks = [];
 const margin = 30;
-const availableWidth = myCanvas.width - margin * 2;
+const availableWidth = bubbleSortCanvas.width - margin * 2;
 const spacing = availableWidth / n;
 
 const colors = [
@@ -33,6 +42,8 @@ const sockColors = [];
 
 const tweenLength = 30;
 
+let animationIsRunning = false;
+
 for (let i = 0; i < n / 2; i++) {
   const t = i / (n / 2 - 1);
   sockColors.push(colors[i]);
@@ -51,43 +62,71 @@ for (let i = 0; i < array.length; i++) {
   const u = Math.sin((i / (array.length - 1)) * Math.PI);
   const x = i * spacing + spacing / 2 + margin;
   const y = stringHeight + u * margin * 0.7;
-  const height = myCanvas.height * 0.4 * array[i];
+  const height = bubbleSortCanvas.height * 0.4 * array[i];
   socks[i] = new Sock(x, y, height, sockColors[i]);
 }
 
-const bird = new Bird(socks[0].loc, socks[1].loc, myCanvas.height * 0.2);
+const bird = new Bird(
+  socks[0].loc,
+  socks[1].loc,
+  bubbleSortCanvas.height * 0.2
+);
 
 const moves = bubbleSort(array);
 moves.shift();
 
-const ctx = myCanvas.getContext("2d");
+const bubbleSortCtx = bubbleSortCanvas.getContext("2d");
 const startTime = new Date().getTime();
 
-animate();
+const startButton = document.getElementById("startButton");
+startButton.addEventListener("click", () => {
+  if (!animationIsRunning) {
+    // Start the animation if it's not already running
+    animationIsRunning = true;
+    animate();
+    startButton.textContent = "INCREASE SPEED";
+  } else animate();
+});
+
+const stopButton = document.getElementById("stopButton");
+stopButton.addEventListener("click", () => {
+  // Stop the animation
+  animationIsRunning = false;
+  startButton.textContent = "Start Animation";
+});
 
 function animate() {
-  ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+  if (!animationIsRunning) {
+    // Stop the animation if the flag is false
+    return;
+  }
+  bubbleSortCtx.clearRect(
+    0,
+    0,
+    bubbleSortCanvas.width,
+    bubbleSortCanvas.height
+  );
 
-  ctx.strokeStyle = "black";
-  ctx.beginPath();
-  ctx.moveTo(0, stringHeight - margin * 0.5);
-  ctx.bezierCurveTo(
-    myCanvas.width / 4,
+  bubbleSortCtx.strokeStyle = "black";
+  bubbleSortCtx.beginPath();
+  bubbleSortCtx.moveTo(0, stringHeight - margin * 0.5);
+  bubbleSortCtx.bezierCurveTo(
+    bubbleSortCanvas.width / 4,
     stringHeight + margin,
-    (3 * myCanvas.width) / 4,
+    (3 * bubbleSortCanvas.width) / 4,
     stringHeight + margin,
-    myCanvas.width,
+    bubbleSortCanvas.width,
     stringHeight - margin * 0.5
   );
-  ctx.stroke();
+  bubbleSortCtx.stroke();
 
   let changed = false;
   for (let i = 0; i < socks.length; i++) {
-    changed = socks[i].draw(ctx) || changed;
+    changed = socks[i].draw(bubbleSortCtx) || changed;
     Physics.update(socks[i].particles, socks[i].segments);
   }
 
-  changed = bird.draw(ctx) || changed;
+  changed = bird.draw(bubbleSortCtx) || changed;
 
   if (new Date().getTime() - startTime > 1000 && !changed && moves.length > 0) {
     const nextMove = moves.shift();
@@ -148,3 +187,95 @@ function bubbleSort(array) {
   } while (swapped);
   return moves;
 }
+
+function quickSort(array) {
+  const moves = [];
+
+  // Helper function for Quick Sort
+  function partition(arr, low, high) {
+    const pivot = arr[high];
+    let i = low - 1;
+
+    for (let j = low; j < high; j++) {
+      moves.push({
+        indices: [j, high],
+        type: "comparison",
+      });
+      if (arr[j] < pivot) {
+        i++;
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        moves.push({
+          indices: [i, j],
+          type: "swap",
+        });
+      }
+    }
+
+    [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+    moves.push({
+      indices: [i + 1, high],
+      type: "swap",
+    });
+
+    return i + 1;
+  }
+
+  function quickSortRecursive(arr, low, high) {
+    if (low < high) {
+      const partitionIndex = partition(arr, low, high);
+      quickSortRecursive(arr, low, partitionIndex - 1);
+      quickSortRecursive(arr, partitionIndex + 1, high);
+    }
+  }
+
+  quickSortRecursive(array, 0, array.length - 1);
+
+  return moves;
+}
+const quickSortMoves = quickSort(array);
+quickSortMoves.shift();
+
+// Add event listener for tab clicks
+document.addEventListener("DOMContentLoaded", function () {
+  // Function to handle tab clicks and execute the appropriate sorting algorithm
+  function handleTabClick(tabName) {
+    // Hide all content sections
+    var contents = document.getElementsByClassName("content");
+    for (var i = 0; i < contents.length; i++) {
+      contents[i].style.display = "none";
+    }
+
+    // Show the selected content section
+    var selectedContent = document.getElementById(tabName + "Content");
+    if (selectedContent) {
+      selectedContent.style.display = "block";
+    }
+
+    // Execute the sorting algorithm corresponding to the tab (e.g., Bubble Sort)
+    if (tabName === "Bubble Sort") {
+      const moves = bubbleSort(array); // Call your Bubble Sort function here
+      moves.shift(); // Remove the first move if needed
+      // Additional logic related to Bubble Sort visualization
+    } else if (tabName === "Quick Sort") {
+      const moves = quickSort(array); // Call your Quick Sort function here
+      moves.shift(); // Remove the first move if needed
+      // Additional logic related to Quick Sort visualization
+    } else if (tabName === "Insertion Sort") {
+      const moves = insertionSort(array); // Call your Insertion Sort function here
+      moves.shift(); // Remove the first move if needed
+      // Additional logic related to Insertion Sort visualization
+    }
+  }
+
+  // Add click event listeners for each tab
+  var tabs = document.getElementsByClassName("nav-link");
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].addEventListener("click", function (event) {
+      var tabName = event.target.textContent.trim();
+      handleTabClick(tabName);
+    });
+  }
+
+  // Initially show the default tab content (e.g., Bubble Sort)
+  handleTabClick("BubbleSort");
+});

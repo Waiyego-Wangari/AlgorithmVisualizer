@@ -1,5 +1,8 @@
-body {
+/* body {
   display: flex;
   flex-direction: column;
   align-items: center;
+} */
+.content {
+  padding-left: 200px;
 }
