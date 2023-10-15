@@ -9,6 +9,8 @@ bubbleSortCanvas.height = 500; //300
 quickSortCanvas.width = 800;
 quickSortCanvas.height = 500;
 const quickSortCtx = quickSortCanvas.getContext("2d");
+const bubbleSortCtx = bubbleSortCanvas.getContext("2d");
+const startTime = new Date().getTime();
 
 const n = 18; //18
 const array = [];
@@ -66,17 +68,34 @@ for (let i = 0; i < array.length; i++) {
   socks[i] = new Sock(x, y, height, sockColors[i]);
 }
 
-const bird = new Bird(
+const bubBird = new Bird(
   socks[0].loc,
   socks[1].loc,
   bubbleSortCanvas.height * 0.2
+);
+const quickBird = new Bird(
+  socks[0].loc,
+  socks[1].loc,
+  quickSortCanvas.height * 0.2
 );
 
 const moves = bubbleSort(array);
 moves.shift();
 
-const bubbleSortCtx = bubbleSortCanvas.getContext("2d");
-const startTime = new Date().getTime();
+function drawElements(ctx, socks) {
+  for (const sock of socks) {
+    // Customize the sock drawing here
+    ctx.fillStyle = sock.color;
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+
+    // Example: Drawing a simple sock as a rectangle
+    ctx.beginPath();
+    ctx.rect(sock.loc.x, sock.loc.y, sock.width, sock.height);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
 
 const startButton = document.getElementById("startButton");
 startButton.addEventListener("click", () => {
@@ -84,6 +103,7 @@ startButton.addEventListener("click", () => {
     // Start the animation if it's not already running
     animationIsRunning = true;
     animate();
+    startQuickSortVisualization(quickSortCtx, quickSortMoves);
     startButton.textContent = "INCREASE SPEED";
   } else animate();
 });
@@ -126,7 +146,7 @@ function animate() {
     Physics.update(socks[i].particles, socks[i].segments);
   }
 
-  changed = bird.draw(bubbleSortCtx) || changed;
+  changed = bubBird.draw(bubbleSortCtx) || changed;
 
   if (new Date().getTime() - startTime > 1000 && !changed && moves.length > 0) {
     const nextMove = moves.shift();
@@ -134,11 +154,11 @@ function animate() {
     if (nextMove.type == "swap") {
       socks[i].moveTo(socks[j].loc, tweenLength);
       socks[j].moveTo(socks[i].loc, tweenLength);
-      bird.moveTo(socks[j].loc, socks[i].loc, false, tweenLength);
+      bubBird.moveTo(socks[j].loc, socks[i].loc, false, tweenLength);
       [socks[i], socks[j]] = [socks[j], socks[i]];
     } else {
       // bird is moving
-      bird.moveTo(socks[i].loc, socks[j].loc, true, tweenLength);
+      bubBird.moveTo(socks[i].loc, socks[j].loc, true, tweenLength);
     }
   }
 
@@ -233,7 +253,114 @@ function quickSort(array) {
   return moves;
 }
 const quickSortMoves = quickSort(array);
-quickSortMoves.shift();
+// quickSortMoves.shift();
+function startQuickSortVisualization(canvas, ctx, moves) {
+  let i = 0;
+  let animationStartTime = null;
+  let animationDuration = 1000; // Duration for partitioning animation in milliseconds
+  //quickBird.initialize(canvas.width / 2, canvas.height / 2);
+
+  function animationLoop(timestamp) {
+    if (i >= moves.length) {
+      return; // All moves are done
+    }
+
+    const move = moves[i];
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawElements(ctx, socks);
+    //quickBird.draw();
+
+    // ... (existing code for drawing elements)
+
+    if (move.type === "comparison") {
+      // Highlight elements being compared (customize as needed)
+      socks[move.indices[0]].highlight(comparisonColor);
+      socks[move.indices[1]].highlight(comparisonColor);
+    } else if (move.type === "swap") {
+      // Highlight elements being swapped (customize as needed)
+      socks[move.indices[0]].highlight(swapColor);
+      socks[move.indices[1]].highlight(swapColor);
+
+      // Perform the swap animation
+      socks[move.indices[0]].moveTo(
+        socks[move.indices[1]].loc,
+        animationDuration
+      );
+      socks[move.indices[1]].moveTo(
+        socks[move.indices[0]].loc,
+        animationDuration
+      );
+      quickBird.moveTo(
+        socks[move.indices[1]].loc,
+        socks[move.indices[0]].loc,
+        false,
+        animationDuration
+      );
+
+      // Swap elements in your array (if needed)
+      [array[move.indices[0]], array[move.indices[1]]] = [
+        array[move.indices[1]],
+        array[move.indices[0]],
+      ];
+
+      // Start the timing for the physics-based animation
+      animationStartTime = timestamp;
+      requestAnimationFrame(updatePositions);
+    }
+
+    // ... (existing code for drawing curves)
+
+    // Request the next animation frame
+    requestAnimationFrame(animationLoop);
+  }
+
+  function updatePositions(timestamp) {
+    if (!animationStartTime) {
+      animationStartTime = timestamp;
+    }
+
+    const elapsedTime = timestamp - animationStartTime;
+
+    if (elapsedTime < animationDuration) {
+      // Calculate the progress and update positions using the Physics class
+      const progress = elapsedTime / animationDuration;
+      Physics.update(
+        socks.map((sock) => sock.particles),
+        []
+      );
+
+      // Update the bird's animation
+      const targetX = socks[moves[i].indices[1]].loc.x;
+      const birdStartX = quickBird.lFoot.x;
+      const birdEndX = quickBird.rFoot.x;
+
+      quickBird.moveTo(
+        {
+          x: birdStartX + (targetX - birdStartX) * progress,
+          y: quickBird.lFoot.y,
+        },
+        { x: birdEndX + (targetX - birdEndX) * progress, y: quickBird.rFoot.y },
+        true, // Enable bouncing effect (if desired)
+        animationDuration
+      );
+
+      // Continue the animation loop
+      requestAnimationFrame(updatePositions);
+    } else {
+      // Increment to the next move
+      i++;
+
+      // Request the next animation frame
+      requestAnimationFrame(animationLoop);
+    }
+  }
+
+  // Start the animation loop
+  requestAnimationFrame(animationLoop);
+}
 
 // Add event listener for tab clicks
 document.addEventListener("DOMContentLoaded", function () {
@@ -250,15 +377,35 @@ document.addEventListener("DOMContentLoaded", function () {
     if (selectedContent) {
       selectedContent.style.display = "block";
     }
+    if (tabName === "BubbleSort") {
+      bubbleSortCtx.clearRect(
+        0,
+        0,
+        bubbleSortCanvas.width,
+        bubbleSortCanvas.height
+      );
+    } else if (tabName === "QuickSort") {
+      quickSortCtx.clearRect(
+        0,
+        0,
+        quickSortCanvas.width,
+        quickSortCanvas.height
+      );
+    }
 
     // Execute the sorting algorithm corresponding to the tab (e.g., Bubble Sort)
-    if (tabName === "Bubble Sort") {
+    if (tabName === "BubbleSort") {
       const moves = bubbleSort(array); // Call your Bubble Sort function here
       moves.shift(); // Remove the first move if needed
       // Additional logic related to Bubble Sort visualization
-    } else if (tabName === "Quick Sort") {
-      const moves = quickSort(array); // Call your Quick Sort function here
+    } else if (tabName === "QuickSort") {
+      const quickSortMoves = quickSort(array); // Call your Quick Sort function here
       moves.shift(); // Remove the first move if needed
+      startQuickSortVisualization(
+        quickSortCanvas,
+        quickSortCtx,
+        quickSortMoves
+      );
       // Additional logic related to Quick Sort visualization
     } else if (tabName === "Insertion Sort") {
       const moves = insertionSort(array); // Call your Insertion Sort function here
