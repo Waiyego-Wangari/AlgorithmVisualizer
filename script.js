@@ -3,12 +3,12 @@
 // import { insertionSort } from "./insertionSort.js";
 // import { animate } from "./visualization.js";
 const bubbleSortCanvas = document.getElementById("bubbleSortCanvas");
-const quickSortCanvas = document.getElementById("quickSortCanvas");
+// const quickSortCanvas = document.getElementById("quickSortCanvas");
 bubbleSortCanvas.width = 800; //500
 bubbleSortCanvas.height = 500; //300
-quickSortCanvas.width = 800;
-quickSortCanvas.height = 500;
-const quickSortCtx = quickSortCanvas.getContext("2d");
+// quickSortCanvas.width = 800;
+// quickSortCanvas.height = 500;
+// const quickSortCtx = quickSortCanvas.getContext("2d");
 const bubbleSortCtx = bubbleSortCanvas.getContext("2d");
 const startTime = new Date().getTime();
 
@@ -82,20 +82,20 @@ const quickBird = new Bird(
 const moves = bubbleSort(array);
 moves.shift();
 
-function drawElements(ctx, socks) {
-  for (const sock of socks) {
-    // Customize the sock drawing here
-    ctx.fillStyle = sock.color;
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
+// function drawElements(ctx, socks) {
+//   for (const sock of socks) {
+//     // Customize the sock drawing here
+//     ctx.fillStyle = sock.color;
+//     ctx.strokeStyle = "black";
+//     ctx.lineWidth = 2;
 
-    // Example: Drawing a simple sock as a rectangle
-    ctx.beginPath();
-    ctx.rect(sock.loc.x, sock.loc.y, sock.width, sock.height);
-    ctx.fill();
-    ctx.stroke();
-  }
-}
+//     // Example: Drawing a simple sock as a rectangle
+//     ctx.beginPath();
+//     ctx.rect(sock.loc.x, sock.loc.y, sock.width, sock.height);
+//     ctx.fill();
+//     ctx.stroke();
+//   }
+// }
 
 const startButton = document.getElementById("startButton");
 startButton.addEventListener("click", () => {
@@ -208,160 +208,6 @@ function bubbleSort(array) {
   return moves;
 }
 
-function quickSort(array) {
-  const moves = [];
-
-  // Helper function for Quick Sort
-  function partition(arr, low, high) {
-    const pivot = arr[high];
-    let i = low - 1;
-
-    for (let j = low; j < high; j++) {
-      moves.push({
-        indices: [j, high],
-        type: "comparison",
-      });
-      if (arr[j] < pivot) {
-        i++;
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-        moves.push({
-          indices: [i, j],
-          type: "swap",
-        });
-      }
-    }
-
-    [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
-    moves.push({
-      indices: [i + 1, high],
-      type: "swap",
-    });
-
-    return i + 1;
-  }
-
-  function quickSortRecursive(arr, low, high) {
-    if (low < high) {
-      const partitionIndex = partition(arr, low, high);
-      quickSortRecursive(arr, low, partitionIndex - 1);
-      quickSortRecursive(arr, partitionIndex + 1, high);
-    }
-  }
-
-  quickSortRecursive(array, 0, array.length - 1);
-
-  return moves;
-}
-const quickSortMoves = quickSort(array);
-// quickSortMoves.shift();
-function startQuickSortVisualization(canvas, ctx, moves) {
-  let i = 0;
-  let animationStartTime = null;
-  let animationDuration = 1000; // Duration for partitioning animation in milliseconds
-  //quickBird.initialize(canvas.width / 2, canvas.height / 2);
-
-  function animationLoop(timestamp) {
-    if (i >= moves.length) {
-      return; // All moves are done
-    }
-
-    const move = moves[i];
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    drawElements(ctx, socks);
-    //quickBird.draw();
-
-    // ... (existing code for drawing elements)
-
-    if (move.type === "comparison") {
-      // Highlight elements being compared (customize as needed)
-      socks[move.indices[0]].highlight(comparisonColor);
-      socks[move.indices[1]].highlight(comparisonColor);
-    } else if (move.type === "swap") {
-      // Highlight elements being swapped (customize as needed)
-      socks[move.indices[0]].highlight(swapColor);
-      socks[move.indices[1]].highlight(swapColor);
-
-      // Perform the swap animation
-      socks[move.indices[0]].moveTo(
-        socks[move.indices[1]].loc,
-        animationDuration
-      );
-      socks[move.indices[1]].moveTo(
-        socks[move.indices[0]].loc,
-        animationDuration
-      );
-      quickBird.moveTo(
-        socks[move.indices[1]].loc,
-        socks[move.indices[0]].loc,
-        false,
-        animationDuration
-      );
-
-      // Swap elements in your array (if needed)
-      [array[move.indices[0]], array[move.indices[1]]] = [
-        array[move.indices[1]],
-        array[move.indices[0]],
-      ];
-
-      // Start the timing for the physics-based animation
-      animationStartTime = timestamp;
-      requestAnimationFrame(updatePositions);
-    }
-
-    // ... (existing code for drawing curves)
-
-    // Request the next animation frame
-    requestAnimationFrame(animationLoop);
-  }
-
-  function updatePositions(timestamp) {
-    if (!animationStartTime) {
-      animationStartTime = timestamp;
-    }
-
-    const elapsedTime = timestamp - animationStartTime;
-
-    if (elapsedTime < animationDuration) {
-      // Calculate the progress and update positions using the Physics class
-      const progress = elapsedTime / animationDuration;
-      Physics.update(
-        socks.map((sock) => sock.particles),
-        []
-      );
-
-      // Update the bird's animation
-      const targetX = socks[moves[i].indices[1]].loc.x;
-      const birdStartX = quickBird.lFoot.x;
-      const birdEndX = quickBird.rFoot.x;
-
-      quickBird.moveTo(
-        {
-          x: birdStartX + (targetX - birdStartX) * progress,
-          y: quickBird.lFoot.y,
-        },
-        { x: birdEndX + (targetX - birdEndX) * progress, y: quickBird.rFoot.y },
-        true, // Enable bouncing effect (if desired)
-        animationDuration
-      );
-
-      // Continue the animation loop
-      requestAnimationFrame(updatePositions);
-    } else {
-      // Increment to the next move
-      i++;
-
-      // Request the next animation frame
-      requestAnimationFrame(animationLoop);
-    }
-  }
-
-  // Start the animation loop
-  requestAnimationFrame(animationLoop);
-}
-
 // Add event listener for tab clicks
 document.addEventListener("DOMContentLoaded", function () {
   // Function to handle tab clicks and execute the appropriate sorting algorithm
@@ -377,21 +223,21 @@ document.addEventListener("DOMContentLoaded", function () {
     if (selectedContent) {
       selectedContent.style.display = "block";
     }
-    if (tabName === "BubbleSort") {
-      bubbleSortCtx.clearRect(
-        0,
-        0,
-        bubbleSortCanvas.width,
-        bubbleSortCanvas.height
-      );
-    } else if (tabName === "QuickSort") {
-      quickSortCtx.clearRect(
-        0,
-        0,
-        quickSortCanvas.width,
-        quickSortCanvas.height
-      );
-    }
+    // if (tabName === "BubbleSort") {
+    //   bubbleSortCtx.clearRect(
+    //     0,
+    //     0,
+    //     bubbleSortCanvas.width,
+    //     bubbleSortCanvas.height
+    //   );
+    // } else if (tabName === "QuickSort") {
+    //   quickSortCtx.clearRect(
+    //     0,
+    //     0,
+    //     quickSortCanvas.width,
+    //     quickSortCanvas.height
+    //   );
+    // }
 
     // Execute the sorting algorithm corresponding to the tab (e.g., Bubble Sort)
     if (tabName === "BubbleSort") {
