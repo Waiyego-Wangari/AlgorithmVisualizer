@@ -3,12 +3,8 @@
 // import { insertionSort } from "./insertionSort.js";
 // import { animate } from "./visualization.js";
 const bubbleSortCanvas = document.getElementById("bubbleSortCanvas");
-// const quickSortCanvas = document.getElementById("quickSortCanvas");
 bubbleSortCanvas.width = 800; //500
 bubbleSortCanvas.height = 500; //300
-// quickSortCanvas.width = 800;
-// quickSortCanvas.height = 500;
-// const quickSortCtx = quickSortCanvas.getContext("2d");
 const bubbleSortCtx = bubbleSortCanvas.getContext("2d");
 const startTime = new Date().getTime();
 
@@ -72,11 +68,6 @@ const bubBird = new Bird(
   socks[0].loc,
   socks[1].loc,
   bubbleSortCanvas.height * 0.2
-);
-const quickBird = new Bird(
-  socks[0].loc,
-  socks[1].loc,
-  quickSortCanvas.height * 0.2
 );
 
 const moves = bubbleSort(array);
